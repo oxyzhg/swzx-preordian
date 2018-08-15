@@ -2,10 +2,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Layout, Form, message } from 'antd';
+import moment from 'moment';
 import axios from 'axios';
 import qs from 'qs';
-import { login, updateToken } from '../actions/auth';
 import LoginForm from '../components/LoginForm';
+import { login, updateToken } from '../actions/auth';
 
 const { Content } = Layout;
 
@@ -22,7 +23,6 @@ class Login extends Component {
     const { validateFields } = this.props.form;
     validateFields((err, values) => {
       if (!err) {
-        console.log(values);
         this.postLoginForm(values);
       }
     });
@@ -37,13 +37,12 @@ class Login extends Component {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       })
       .then(res => {
-        console.log(res);
         if (res.data.access_token) {
+          const { access_token, expires_in } = res.data;
+          const expires_at = moment().add(expires_in, 'second');
+          this.props.updateToken(access_token, expires_at);
           this.getUserInfo(res.data.access_token);
         }
-        // login(res.data.token)
-        this.props.history.push('/');
-        message.success('登录成功');
       })
       .catch(err => {
         console.log(err);
@@ -52,7 +51,6 @@ class Login extends Component {
   getUserInfo = token => {
     if (!token) return;
     let baseUrl = this.props.baseUrl.test;
-    let params = qs.stringify({ token });
 
     axios
       .get(`${baseUrl}/preordain/userinfo`, {
@@ -62,10 +60,11 @@ class Login extends Component {
         }
       })
       .then(res => {
-        console.log(res);
-        // login(res.data.token)
-        this.props.history.push('/');
-        message.success('登录成功');
+        if (res.status === 200) {
+          this.props.login(res.data.name)
+          this.props.history.push('/');
+          message.success('登录成功');
+        }
       })
       .catch(err => {
         console.log(err);

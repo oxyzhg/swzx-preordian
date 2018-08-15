@@ -1,8 +1,7 @@
-export const login = userinfo => ({
+export const login = username => ({
   type: 'AUTH_LOGIN',
   isAuth: true,
-  uid: userinfo.id,
-  userinfo
+  username
 });
 
 export const logout = () => ({
@@ -10,8 +9,9 @@ export const logout = () => ({
   isAuth: false
 });
 
-export const updateToken = token => ({
+export const updateToken = (token, expiresAt) => ({
   type: 'UPDATE_AUTH_TOKEN',
   isAuth: true,
-  token
+  token,
+  expiresAt
 });

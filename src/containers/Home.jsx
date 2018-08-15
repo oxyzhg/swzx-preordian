@@ -115,7 +115,7 @@ class Home extends Component {
     let { isAuth, token } = this.props.auth;
     if (!isAuth || !token) {
       message.info('请登录!');
-      // this.props.history.push('/login');
+      this.props.history.push('/login');
     }
   }
   handleChange = e => {

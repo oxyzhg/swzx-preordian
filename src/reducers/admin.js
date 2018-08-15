@@ -1,7 +1,9 @@
 const initialState = {
   isAuth: false,
-  username: null,
   token: null,
+  expiresAt: null,
+  username: null,
+  optional_list: null,
   admin_default: null
 };
 
@@ -23,14 +25,21 @@ const Admin = (state = initialState, action) => {
     case 'ADMIN_LOGOUT':
       return {
         isAuth: action.isAuth,
-        username: null,
-        token: null
+        token: null,
+        expiresAt: null,
+        username: null
       };
     case 'UPDATE_ADMIN_TOKEN':
       return {
         ...state,
         isAuth: action.isAuth,
-        token: action.token
+        token: action.token,
+        expiresAt: action.expiresAt
+      };
+    case 'UPDATE_OPTIONAL_LIST':
+      return {
+        ...state,
+        optional_list: [...action.data]
       };
     case 'UPDATE_ADMIN_DEFAULT':
       return {

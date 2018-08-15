@@ -1,8 +1,8 @@
 const initialState = {
   isAuth: false,
   token: null,
-  uid: null,
-  userinfo: null
+  expiresAt: null,
+  username: null
 };
 
 /**
@@ -18,21 +18,21 @@ const Auth = (state = initialState, action) => {
       return {
         ...state,
         isAuth: action.isAuth,
-        uid: action.uid,
-        userinfo: action.userinfo
+        username: action.username
       };
     case 'AUTH_LOGOUT':
       return {
         isAuth: action.isAuth,
         token: null,
-        uid: null,
-        userinfo: null
+        expiresAt: null,
+        username: null
       };
     case 'UPDATE_AUTH_TOKEN':
       return {
         ...state,
         isAuth: action.isAuth,
-        token: action.token
+        token: action.token,
+        expiresAt: action.expiresAt
       };
     default:
       return state;

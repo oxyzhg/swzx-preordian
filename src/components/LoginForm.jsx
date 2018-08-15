@@ -15,6 +15,7 @@ const LoginForm = props => {
       <h2>{props.title}</h2>
       <FormItem>
         {getFieldDecorator('username', {
+          initialValue: 'jxxy@sdut.edu.cn',
           rules: [{ required: true, message: 'Please input your Username!' }]
         })(
           <Input
