@@ -1,0 +1,26 @@
+page__layout {
+  min-height: 100vh;
+}
+
+.page__hd {
+  min-width: 1016px;
+  color: #fff;
+  font-weight: 700;
+  background-color: #008aff;
+}
+
+.page__hd h3 {
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 3px;
+}
+
+.page__bd {
+  padding: 40px 50px;
+  background-color: #fff;
+}
+
+.page__hd,
+.page__ft {
+  text-align: center;
+}
