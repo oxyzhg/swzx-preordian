@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
-import Home from '../containers/Home';
-import Login from '../containers/Login';
-import Admin from '../containers/Admin/Admin';
-import AdminLogin from '../containers/Admin/Login';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import Admin from '@/pages/Admin/Admin';
+import AdminLogin from '@/pages/Admin/Login';
 
 class Router extends Component {
   render() {

@@ -1,12 +1,10 @@
 import { combineReducers } from 'redux';
 import baseUrl from './baseUrl';
-import admin from './admin';
-import auth from './auth';
-import selected from './selected';
+import adminData from './adminData';
+import selectedInfo from './selectedInfo';
 
 export default combineReducers({
   baseUrl,
-  admin,
-  auth,
-  selected
+  adminData,
+  selectedInfo
 });

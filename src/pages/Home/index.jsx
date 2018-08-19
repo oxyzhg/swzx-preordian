@@ -1,15 +1,13 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { Layout, Form, Divider, BackTop, message } from 'antd';
+import { Form, Divider, BackTop, message } from 'antd';
+import moment from 'moment';
 import axios from 'axios';
-import { logout, updateToken } from '../actions/auth';
-import { updateSelectedList, updateOptionalList } from '../actions/selected';
-import SelectForm from '../components/SelectForm';
-import SelectTimeline from '../components/SelectTimeline';
-import './style.css';
-
-const { Content } = Layout;
+import BasicLayout from '@/layouts/BasicLayout';
+import SelectForm from '@/components/SelectForm';
+import SelectTimeline from '@/components/SelectTimeline';
+import { updateSelectedList, updateOptionalList } from '@/actions/select';
 
 class Home extends Component {
   constructor(props) {
@@ -112,21 +110,19 @@ class Home extends Component {
     };
   }
   componentDidMount() {
-    let { isAuth, token } = this.props.auth;
-    if (!isAuth || !token) {
-      message.info('请登录!');
+    let { token, expires_at } = sessionStorage;
+    if (!token) {
+      message.info('请登录');
       this.props.history.push('/login');
+    } else if (expires_at && moment().isAfter(expires_at)) {
+      console.log('expires');
     }
   }
-  handleChange = e => {
-    console.log(e);
-  };
   handleSubmit = e => {
     e.preventDefault();
     const { validateFields } = this.props.form;
     validateFields((err, values) => {
       if (!err) {
-        message.success('提交成功~');
         console.log(values);
       }
     });
@@ -152,11 +148,10 @@ class Home extends Component {
   updateOptionalList = data => {};
   render() {
     return (
-      <Content className="page__bd">
+      <BasicLayout history={this.props.history}>
         <SelectForm
           form={this.props.form}
           options={this.state.options}
-          handleChange={this.handleChange}
           handleSubmit={this.handleSubmit}
         />
         <Divider />
@@ -166,20 +161,17 @@ class Home extends Component {
           endAt={'2018-09-27 14:00'}
         />
         <BackTop />
-      </Content>
+      </BasicLayout>
     );
   }
 }
 
 const mapStateToProps = state => ({
   baseUrl: state.baseUrl,
-  auth: state.auth,
   selected: state.selected
 });
 
 const mapDispatchToProps = dispatch => ({
-  logout: bindActionCreators(logout, dispatch),
-  updateToken: bindActionCreators(updateToken, dispatch),
   updateSelectedList: bindActionCreators(updateSelectedList, dispatch),
   updateOptionalList: bindActionCreators(updateOptionalList, dispatch)
 });

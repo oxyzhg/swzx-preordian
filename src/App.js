@@ -1,28 +1,26 @@
 import React, { Component } from 'react';
 import { HashRouter as Router } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { Layout } from 'antd';
-import Routes from './routes';
-import ConfigureStore from './store';
-import PageHeader from './layouts/PageHeader';
-import PageFooter from './layouts/PageFooter';
+import { Route, Switch, Redirect } from 'react-router-dom';
 
-const store = ConfigureStore();
+import NotMatch from '@/pages/404';
+import Home from '@/pages/Home';
+import HomeLogin from '@/pages/Login/HomeLogin';
+import Admin from '@/pages/Admin';
+import AdminLogin from '@/pages/Login/AdminLogin';
 
 class App extends Component {
   render() {
     return (
-      <div className="App">
-        <Provider store={store}>
-          <Router>
-            <Layout>
-              <PageHeader title="大学生事务中心新生参观预约系统" />
-              <Routes />
-              <PageFooter year="2018" />
-            </Layout>
-          </Router>
-        </Provider>
-      </div>
+      <Router>
+        <Switch>
+          {/* <Redirect exact from="/" to="/login" /> */}
+          <Route exact path="/" component={Home} />
+          <Route exact path="/login" component={HomeLogin} />
+          <Route exact path="/admin" component={Admin} />
+          <Route exact path="/admin/login" component={AdminLogin} />
+          <Route component={NotMatch} />
+        </Switch>
+      </Router>
     );
   }
 }

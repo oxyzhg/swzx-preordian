@@ -8,14 +8,11 @@ const LoginForm = props => {
   const { getFieldDecorator } = props.form;
 
   return (
-    <Form
-      className="login-form"
-      onSubmit={e => props.handleSubmit(e, props.form)}
-    >
-      <h2>{props.title}</h2>
+    <Form className="login-form" onSubmit={e => props.handleSubmit(e, props.form)}>
+      <h2>{props.title || 'LOGIN'}</h2>
       <FormItem>
         {getFieldDecorator('username', {
-          initialValue: 'jxxy@sdut.edu.cn',
+          initialValue: 'jixie@youth.com',
           rules: [{ required: true, message: 'Please input your Username!' }]
         })(
           <Input

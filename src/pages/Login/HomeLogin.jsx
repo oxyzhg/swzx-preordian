@@ -1,19 +1,17 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { Layout, Form, message } from 'antd';
+import { Form, message } from 'antd';
 import moment from 'moment';
 import axios from 'axios';
 import qs from 'qs';
-import LoginForm from '../components/LoginForm';
-import { login, updateToken } from '../actions/auth';
+import BasicLayout from '@/layouts/BasicLayout';
+import LoginForm from '@/components/LoginForm';
+import './style.scss';
 
-const { Content } = Layout;
-
-class Login extends Component {
+class HomeLogin extends Component {
   componentDidMount() {
-    let { isAuth, username, token } = this.props.auth;
-    if (isAuth && token) {
+    const { username, token, expires_at } = sessionStorage;
+    if (token && expires_at && moment().isBefore(expires_at)) {
       message.success(`欢迎你，${username}`);
       this.props.history.push('/');
     }
@@ -23,34 +21,36 @@ class Login extends Component {
     const { validateFields } = this.props.form;
     validateFields((err, values) => {
       if (!err) {
+        // console.log(values);
         this.postLoginForm(values);
       }
     });
   };
   postLoginForm = data => {
     if (!data) return;
-    let baseUrl = this.props.baseUrl.test;
-    let params = qs.stringify(data);
+    const { baseUrl } = this.props;
+    const params = qs.stringify(data);
 
     axios
       .post(`${baseUrl}/preordain/login`, params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       })
       .then(res => {
-        if (res.data.access_token) {
+        if (res.status >= 200 && res.status <= 300) {
           const { access_token, expires_in } = res.data;
-          const expires_at = moment().add(expires_in, 'second');
-          this.props.updateToken(access_token, expires_at);
+          const expires_at = moment().add(expires_in, 'second').format('YYYY-MM-DD HH:mm:ss');
+          sessionStorage.setItem('token', access_token);
+          sessionStorage.setItem('expires_at', expires_at);
           this.getUserInfo(res.data.access_token);
         }
       })
       .catch(err => {
-        console.log(err);
+        message.error('请检查用户名密码是否正确');
       });
   };
   getUserInfo = token => {
     if (!token) return;
-    let baseUrl = this.props.baseUrl.test;
+    const { baseUrl } = this.props;
 
     axios
       .get(`${baseUrl}/preordain/userinfo`, {
@@ -60,40 +60,28 @@ class Login extends Component {
         }
       })
       .then(res => {
-        if (res.status === 200) {
-          this.props.login(res.data.name)
+        if (res.status >= 200 && res.status <= 300) {
+          sessionStorage.removeItem('admin');
+          sessionStorage.setItem('username', res.data.name);
+          message.success(`${res.data.name} 登录成功`);
           this.props.history.push('/');
-          message.success('登录成功');
         }
       })
       .catch(err => {
-        console.log(err);
+        console.error(err);
       });
   };
   render() {
     return (
-      <Content className="page__bd">
-        <LoginForm
-          title="LOGIN"
-          form={this.props.form}
-          handleSubmit={this.handleSubmit}
-        />
-      </Content>
+      <BasicLayout history={this.props.history}>
+        <LoginForm form={this.props.form} handleSubmit={this.handleSubmit} />
+      </BasicLayout>
     );
   }
 }
 
 const mapStateToProps = state => ({
-  baseUrl: state.baseUrl,
-  auth: state.auth
+  baseUrl: state.baseUrl
 });
 
-const mapDispatchToProps = dispatch => ({
-  login: bindActionCreators(login, dispatch),
-  updateToken: bindActionCreators(updateToken, dispatch)
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Form.create()(Login));
+export default connect(mapStateToProps)(Form.create()(HomeLogin));

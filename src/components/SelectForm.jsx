@@ -18,7 +18,6 @@ const SelectForm = props => {
             options={props.options}
             // option={{ initialValue: ['21日下午', '14:00-14:20'] }}
             // initialValue={['21日下午', '14:00-14:20']}
-            onChange={props.handleChange}
           />
         )}
       </FormItem>

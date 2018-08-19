@@ -11,6 +11,8 @@ class NewOrdianForm extends Component {
     super(props);
     this.state = {
       uneditable: true,
+      openUneditable: true,
+      startUneditable: true,
       openValue: moment('2018-08-08 10:00'),
       closeValue: moment('2018-08-08 12:00'),
       startValue: moment('2018-08-08 08:00'),
@@ -67,13 +69,13 @@ class NewOrdianForm extends Component {
     this.onChange('endValue', value);
   };
   handleEditable = e => {
-    this.setState({
-      uneditable: false
-    });
+    this.setState({ startUneditable: false });
   };
   handleNewPage = e => {
     this.setState({
       uneditable: false,
+      openUneditable: false,
+      startUneditable: false,
       openValue: null,
       closeValue: null,
       startValue: null,
@@ -205,7 +207,7 @@ class NewOrdianForm extends Component {
             ]
           })(
             <DatePicker
-              disabled={this.state.uneditable}
+              disabled={this.state.openUneditable}
               disabledDate={this.disabledOpenDate}
               showTime={{ minuteStep: 5, format: 'HH:mm' }}
               format="YYYY-MM-DD HH:mm"
@@ -226,7 +228,7 @@ class NewOrdianForm extends Component {
             ]
           })(
             <DatePicker
-              disabled={this.state.uneditable}
+              disabled={this.state.openUneditable}
               disabledDate={this.disabledCloseDate}
               showTime={{ minuteStep: 5, format: 'HH:mm' }}
               format="YYYY-MM-DD HH:mm"
@@ -247,7 +249,7 @@ class NewOrdianForm extends Component {
             ]
           })(
             <DatePicker
-              disabled={this.state.uneditable}
+              disabled={this.state.startUneditable}
               disabledDate={this.disabledStartDate}
               showTime={{ minuteStep: 5, use12Hours: true, format: 'HH A' }}
               format="YYYY-MM-DD HH:00"
@@ -269,7 +271,7 @@ class NewOrdianForm extends Component {
             ]
           })(
             <DatePicker
-              disabled={this.state.uneditable}
+              disabled={this.state.startUneditable}
               disabledDate={this.disabledEndDate}
               showTime={{ minuteStep: 5, use12Hours: true, format: 'HH A' }}
               format="YYYY-MM-DD HH:00"

@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Layout, Row, Col, message } from 'antd';
+import { Row, Col, message } from 'antd';
 import axios from 'axios';
+import qs from 'qs';
 import moment from 'moment';
-import NewOrdianForm from '../../components/Admin/NewOrdianForm';
-import { Object } from 'core-js';
-
-const { Content } = Layout;
+import BasicLayout from '@/layouts/BasicLayout';
+import NewOrdianForm from '@/components/NewOrdianForm';
 
 class Admin extends Component {
   componentDidMount() {
-    let { isAuth, token } = this.props.admin;
-    if (!isAuth || !token) {
-      message.info('请登录!');
-      // this.props.history.push('/admin/login');
+    let { admin, token } = sessionStorage;
+    if (!admin || !token) {
+      message.info('请登录后台');
+      this.props.history.push('/admin/login');
     }
   }
   handleSubmit = (e, form) => {
@@ -30,8 +29,7 @@ class Admin extends Component {
               .sort(
                 (a, b) =>
                   a.split(':')[0] === b.split(':')[0]
-                    ? a.split('-')[0].split(':')[1] -
-                      b.split('-')[0].split(':')[1]
+                    ? a.split('-')[0].split(':')[1] - b.split('-')[0].split(':')[1]
                     : a.split(':')[0] - b.split(':')[0]
               )
               .map(i => ({
@@ -47,6 +45,7 @@ class Admin extends Component {
           options
         };
         console.log(formData);
+        this.createPreordainInfo(formData);
         message.success('提交成功~');
       }
     });
@@ -64,23 +63,41 @@ class Admin extends Component {
         console.log(err);
       });
   };
+  createPreordainInfo = data => {
+    const { baseUrl, admin } = this.props;
+    if (!admin.token) return;
+    const params = qs.stringify(data);
+    axios
+      .post(`${baseUrl}/preordain/time`, params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
+      .then(res => {
+        if (res.data) {
+          console.log(res);
+        }
+      })
+      .catch(err => {
+        message.error(err);
+      });
+
+    console.log(admin.token);
+  };
   render() {
     return (
-      <Content className="page__bd">
+      <BasicLayout history={this.props.history}>
         <Row type="flex" justify="center">
           <Col xs={20} sm={16} md={12} lg={8}>
             <NewOrdianForm handleSubmit={this.handleSubmit} />
           </Col>
         </Row>
-      </Content>
+      </BasicLayout>
     );
   }
 }
 
 const mapStateToProps = state => ({
   baseUrl: state.baseUrl,
-  admin: state.admin,
-  adminDefault: state.admin.admin_default
+  adminData: state.adminData
 });
 
 export default connect(mapStateToProps)(Admin);
