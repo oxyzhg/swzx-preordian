@@ -11,14 +11,18 @@ class index extends Component {
     isAuth: false
   };
   componentDidMount() {
-    const { token, expires_at, username, admin } = sessionStorage;
-    if (token && expires_at && (username || admin)) {
+    const { token, expires_at } = sessionStorage;
+    if (token && expires_at) {
       this.setState({ isAuth: true });
     }
   }
   currentYear() {
     return new Date().getFullYear();
   }
+  /**
+   * @description 处理登录点击事件，跳转页面
+   * @param {*} e
+   */
   handleLogin = e => {
     if (this.props.history.location.pathname === '/login') {
       message.info('请登录');
@@ -26,6 +30,10 @@ class index extends Component {
       this.props.history.push('/login');
     }
   };
+  /**
+   * @description 处理退出点击事件，删除登录信息并条船
+   * @param {*} e
+   */
   handleLogout = e => {
     Modal.confirm({
       title: '是否退出当前账号',
@@ -37,7 +45,6 @@ class index extends Component {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('expires_at');
         sessionStorage.removeItem('username');
-        sessionStorage.removeItem('admin');
         message.success('已退出');
         this.props.history.push('/login');
       }

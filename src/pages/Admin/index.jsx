@@ -9,13 +9,24 @@ import NewOrdianForm from '@/components/NewOrdianForm';
 
 class Admin extends Component {
   componentDidMount() {
-    let { admin, token } = sessionStorage;
-    if (!admin || !token) {
+    let { token, expires_at } = sessionStorage;
+    if (!token) {
       message.info('请登录后台');
       this.props.history.push('/admin/login');
+    } else if (expires_at && moment().isAfter(expires_at)) {
+      message.error('登录过期，请重新登录');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('expires_at');
+      sessionStorage.removeItem('username');
     }
   }
-  handleSubmit = (e, form) => {
+  /**
+   * @description 表单提交事件
+   * @param {*} e
+   * @param {*} form
+   * @param {*} type 提交类型,new新建,upgrade更新
+   */
+  handleSubmit = (e, form, type) => {
     e.preventDefault();
     const { validateFields } = form;
     validateFields((err, values) => {
@@ -44,43 +55,69 @@ class Admin extends Component {
           end_at: moment(values.end_at).format('YYYY-MM-DD HH:mm:00'),
           options
         };
-        console.log(formData);
-        this.createPreordainInfo(formData);
-        message.success('提交成功~');
+        switch (type) {
+          case 'new':
+            this.createPreordainInfo(formData);
+            break;
+          case 'upgrade':
+            this.upgradePreordainInfo(formData);
+            break;
+          default:
+            return;
+        }
       }
     });
   };
-  getDefaultOptions = id => {
-    axios
-      .get(`${this.props.baseUrl}/test`, {
-        params: { id }
-      })
-      .then(res => {
-        console.log(res);
-        // 合理化、序列化接到的数据，然后更新到页面
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  };
+  /**
+   * @description 向服务器发送post请求，创建新的预约数据
+   * @param {*} data
+   * @returns
+   */
   createPreordainInfo = data => {
-    const { baseUrl, admin } = this.props;
-    if (!admin.token) return;
+    if (!data) return;
+    const { baseUrl } = this.props;
+    const { token } = sessionStorage;
     const params = qs.stringify(data);
     axios
       .post(`${baseUrl}/preordain/time`, params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
       .then(res => {
-        if (res.data) {
+        if (res.status >= 200 && res.status <= 300) {
           console.log(res);
+          message.success('创建成功，请刷新页面');
         }
       })
       .catch(err => {
-        message.error(err);
+        console.error(err);
       });
-
-    console.log(admin.token);
+  };
+  /**
+   * @description 向服务器发送put请求，更新系统开放时间和结束时间
+   * @param {*} data
+   * @returns
+   */
+  upgradePreordainInfo = data => {
+    if (!data) return;
+    const { baseUrl } = this.props;
+    const { token } = sessionStorage;
+    const params = qs.stringify(data);
+    axios
+      .put(`${baseUrl}/preordain/time`, params, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        if (res.status >= 200 && res.status <= 300) {
+          message.success('更新成功，请刷新页面');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+      });
   };
   render() {
     return (
@@ -96,8 +133,7 @@ class Admin extends Component {
 }
 
 const mapStateToProps = state => ({
-  baseUrl: state.baseUrl,
-  adminData: state.adminData
+  baseUrl: state.baseUrl
 });
 
 export default connect(mapStateToProps)(Admin);

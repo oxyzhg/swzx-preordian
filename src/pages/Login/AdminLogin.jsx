@@ -12,9 +12,9 @@ import './style.scss';
 
 class AdminLogin extends Component {
   componentDidMount() {
-    const { admin, token, expires_at } = sessionStorage;
-    if (admin && token && expires_at && moment().isBefore(expires_at)) {
-      message.success(`欢迎你，${admin}`);
+    const { username, token, expires_at } = sessionStorage;
+    if (token && expires_at && moment().isBefore(expires_at)) {
+      message.success(`欢迎你，${username}`);
       this.props.history.push('/admin');
     }
   }
@@ -22,18 +22,16 @@ class AdminLogin extends Component {
    * @description 处理表单提交事件
    * @memberof Login
    */
-  handleSubmit = e => {
+  handleSubmit = (e, form) => {
     e.preventDefault();
-    const { validateFields } = this.props.form;
-    validateFields((err, values) => {
+    form.validateFields((err, values) => {
       if (!err) {
-        console.log(values);
         this.postLoginForm(values);
       }
     });
   };
   /**
-   * @description 向服务器发送登录请求
+   * @description 向服务器发送post请求，登录并获取token
    * @param {*} data
    * @returns
    */
@@ -42,25 +40,27 @@ class AdminLogin extends Component {
     const { baseUrl } = this.props;
     const params = qs.stringify(data);
     axios
-      .post(`${baseUrl}/preordain/adminlogin`, params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      })
+      .post(`${baseUrl}/preordain/adminlogin`, params)
       .then(res => {
-        if (res.data.access_token) {
-          const { access_token, expires_in } = res.data;
-          const expires_at = moment().add(expires_in, 'second');
+        if (res.status >= 200 && res.status <= 300) {
+          const { access_token, expires_in } = res.data.data;
+          const expires_at = moment()
+            .add(expires_in, 'second')
+            .format('YYYY-MM-DD HH:mm:ss');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('expires_at');
           sessionStorage.setItem('token', access_token);
           sessionStorage.setItem('expires_at', expires_at);
-          this.getUserInfo(res.data.access_token);
+          this.getUserInfo(access_token);
         }
       })
       .catch(err => {
-        message.error('请检查用户名密码是否正确');
+        message.error(err.response.data.message);
       });
   };
   /**
-   * @description 根据上一步登录得到的token请求用户数据
-   * @param {*} token
+   * @description 向服务器发送get请求，获取用户信息
+   * @param {*} token 上一步登录时候获取的token
    * @returns
    */
   getUserInfo = token => {
@@ -69,26 +69,25 @@ class AdminLogin extends Component {
     axios
       .get(`${baseUrl}/preordain/userinfo`, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: `Bearer ${token}`
         }
       })
       .then(res => {
         if (res.status >= 200 && res.status <= 300) {
-          sessionStorage.setItem('usernmae');
-          sessionStorage.setItem('admin', res.data.name);
-          message.success(`${res.data.name} 登录成功`);
+          sessionStorage.removeItem('username');
+          sessionStorage.setItem('username', res.data.data.name);
+          message.success(`${res.data.data.name} 登录成功`);
           this.props.history.push('/admin');
         }
       })
       .catch(err => {
-        console.error(err);
+        console.error(err.response);
       });
   };
   render() {
     return (
       <BasicLayout history={this.props.history}>
-        <LoginForm title="ADMIN" form={this.props.form} handleSubmit={this.handleSubmit} />
+        <LoginForm title="ADMIN" handleSubmit={this.handleSubmit} />
       </BasicLayout>
     );
   }

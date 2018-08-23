@@ -12,7 +12,8 @@ const LoginForm = props => {
       <h2>{props.title || 'LOGIN'}</h2>
       <FormItem>
         {getFieldDecorator('username', {
-          initialValue: 'jixie@youth.com',
+          // initialValue: 'jixie@youthol.cn',
+          // initialValue: 'dxsswzx',
           rules: [{ required: true, message: 'Please input your Username!' }]
         })(
           <Input
@@ -45,8 +46,8 @@ const LoginForm = props => {
 
 LoginForm.propTypes = {
   title: PropTypes.string,
-  form: PropTypes.object.isRequired,
+  // form: PropTypes.object.isRequired,
   handleSubmit: PropTypes.func.isRequired
 };
 
-export default LoginForm;
+export default Form.create()(LoginForm);

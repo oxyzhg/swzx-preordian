@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import { Form, DatePicker, Select, Button, Divider, BackTop } from 'antd';
 import moment from 'moment';
+import axios from 'axios';
 
 const FormItem = Form.Item;
 const Option = Select.Option;
@@ -10,15 +12,18 @@ class NewOrdianForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      uneditable: true,
       openUneditable: true,
       startUneditable: true,
-      openValue: moment('2018-08-08 10:00'),
-      closeValue: moment('2018-08-08 12:00'),
-      startValue: moment('2018-08-08 08:00'),
-      endValue: moment('2018-08-09 17:00'),
-      options: []
+      openValue: null,
+      closeValue: null,
+      startValue: null,
+      endValue: null,
+      options: [],
+      submitType: 'new'
     };
+  }
+  componentDidMount() {
+    this.getPreordainAt();
   }
   disabledOpenDate = openValue => {
     const closeValue = this.state.closeValue;
@@ -69,11 +74,13 @@ class NewOrdianForm extends Component {
     this.onChange('endValue', value);
   };
   handleEditable = e => {
-    this.setState({ startUneditable: false });
+    this.setState({
+      openUneditable: false,
+      submitType: 'upgrade'
+    });
   };
   handleNewPage = e => {
     this.setState({
-      uneditable: false,
       openUneditable: false,
       startUneditable: false,
       openValue: null,
@@ -138,18 +145,14 @@ class NewOrdianForm extends Component {
 
       today = today.set('date', today.get('date') + gap);
     }
-    console.log(options);
     this.setState({ options });
-
     return startValue.format('YYYY-MM-DD');
   };
 
   generateSelectField = e => {
     const { options } = this.state;
     const { getFieldDecorator } = this.props.form;
-
     let selectFieldList = [];
-
     if (options.length) {
       selectFieldList = options.map((item, index) => (
         <FormItem label={item.label} key={item.value}>
@@ -167,7 +170,26 @@ class NewOrdianForm extends Component {
     }
     return selectFieldList;
   };
-
+  getPreordainAt = () => {
+    const { baseUrl } = this.props;
+    axios
+      .get(`${baseUrl}/preordain/time`)
+      .then(res => {
+        // TODO: 返回数据处理分类
+        if (res.status >= 200 && res.status <= 300) {
+          const data = res.data.data;
+          this.setState({
+            openValue: moment(data.open_at),
+            closeValue: moment(data.close_at),
+            startValue: moment(data.start_at),
+            endValue: moment(data.end_at)
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err.response.data.message);
+      });
+  };
   render() {
     const { getFieldDecorator } = this.props.form;
     const formItemLayout = {
@@ -192,9 +214,8 @@ class NewOrdianForm extends Component {
         }
       }
     };
-
     return (
-      <Form onSubmit={e => this.props.handleSubmit(e, this.props.form)}>
+      <Form onSubmit={e => this.props.handleSubmit(e, this.props.form, this.state.submitType)}>
         <BackTop />
         <FormItem {...formItemLayout} label="开放预约时间">
           {getFieldDecorator('open_at', {
@@ -285,7 +306,7 @@ class NewOrdianForm extends Component {
         <Divider />
         {this.generateSelectField()}
         <FormItem {...tailFormItemLayout}>
-          {this.state.uneditable ? (
+          {this.state.openUneditable ? (
             <Button.Group>
               <Button type="primary" ghost onClick={this.handleEditable}>
                 修改
@@ -309,4 +330,8 @@ NewOrdianForm.propTypes = {
   handleSubmit: PropTypes.func.isRequired
 };
 
-export default Form.create()(NewOrdianForm);
+const mapStateToProps = state => ({
+  baseUrl: state.baseUrl
+});
+
+export default connect(mapStateToProps)(Form.create()(NewOrdianForm));

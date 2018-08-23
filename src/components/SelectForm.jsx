@@ -7,19 +7,12 @@ const FormItem = Form.Item;
 const SelectForm = props => {
   const { getFieldDecorator } = props.form;
   return (
-    <Form onSubmit={props.handleSubmit} className="login-form">
+    <Form onSubmit={e => props.handleSubmit(e, props.form)} className="login-form">
       <FormItem>
-        {getFieldDecorator('preordian', {
-          initialValue: ['21日下午', '14:00-14:20'],
+        {getFieldDecorator('preordain', {
+          initialValue: props.defaultValue,
           rules: [{ required: true, message: '参观时间段不能为空!' }]
-        })(
-          <Cascader
-            placeholder="请选择参观时间段"
-            options={props.options}
-            // option={{ initialValue: ['21日下午', '14:00-14:20'] }}
-            // initialValue={['21日下午', '14:00-14:20']}
-          />
-        )}
+        })(<Cascader placeholder="请选择参观时间段" options={props.options} />)}
       </FormItem>
       <FormItem>
         <Button type="primary" htmlType="submit" className="login-form-button">
@@ -35,4 +28,4 @@ SelectForm.propTypes = {
   data: PropTypes.string
 };
 
-export default SelectForm;
+export default Form.create()(SelectForm);

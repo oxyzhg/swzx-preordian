@@ -1,112 +1,21 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { Form, Divider, BackTop, message } from 'antd';
+import { Divider, BackTop, message } from 'antd';
 import moment from 'moment';
 import axios from 'axios';
+import qs from 'qs';
 import BasicLayout from '@/layouts/BasicLayout';
 import SelectForm from '@/components/SelectForm';
 import SelectTimeline from '@/components/SelectTimeline';
-import { updateSelectedList, updateOptionalList } from '@/actions/select';
 
 class Home extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      options: [
-        {
-          value: '21日下午',
-          label: '21日下午',
-          children: [
-            {
-              value: '14:00-14:20',
-              label: '14:00-14:20'
-            },
-            {
-              value: '14:20-14:40',
-              label: '14:20-14:40'
-            },
-            {
-              value: '14:40-15:00',
-              label: '14:40-15:00'
-            }
-          ]
-        },
-        {
-          value: '22日上午',
-          label: '22日上午',
-          children: [
-            {
-              value: '08:00-08:20',
-              label: '08:00-08:20'
-            },
-            {
-              value: '08:20-08:40',
-              label: '08:20-08:40'
-            },
-            {
-              value: '08:40-09:00',
-              label: '08:40-09:00'
-            }
-          ]
-        },
-        {
-          value: '22日下午',
-          label: '22日下午',
-          children: [
-            {
-              value: '14:00-14:20',
-              label: '14:00-14:20'
-            },
-            {
-              value: '14:20-14:40',
-              label: '14:20-14:40'
-            },
-            {
-              value: '14:40-15:00',
-              label: '14:40-15:00'
-            }
-          ]
-        }
-      ],
-      selectedList: [
-        {
-          id: 1,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        },
-        {
-          id: 2,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        },
-        {
-          id: 3,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        },
-        {
-          id: 4,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        },
-        {
-          id: 5,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        },
-        {
-          id: 6,
-          collegeName: '机械工程学院',
-          selectDate: '2018-08-08',
-          selectTime: '14:00-14:20'
-        }
-      ]
+      selectedList: null,
+      selectedOptions: null,
+      defaultOption:null,
+      preordainAt: null
     };
   }
   componentDidMount() {
@@ -115,50 +24,172 @@ class Home extends Component {
       message.info('请登录');
       this.props.history.push('/login');
     } else if (expires_at && moment().isAfter(expires_at)) {
-      console.log('expires');
+      message.error('登录过期，请重新登录');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('expires_at');
+      sessionStorage.removeItem('username');
+    } else {
+
     }
+    this.getSelectedList();
+    this.getPreordainAt();
   }
-  handleSubmit = e => {
+  /**
+   * @description 处理时间段选择提交事件
+   * @param {*} e
+   * @param {*} form
+   */
+  handleSubmit = (e, form) => {
     e.preventDefault();
-    const { validateFields } = this.props.form;
-    validateFields((err, values) => {
+    const { data } = this.state;
+    form.validateFields((err, values) => {
       if (!err) {
-        console.log(values);
+        if (this.state.defaultOption === values.preordain) {
+          message.info('该时间段已经被选用');
+          return;
+        }
+        const [date, time] = values.preordain;
+        const current = data.filter(item => item.date === date && item.time === time)[0];
+        const formData = { id: current.id };
+        this.createSelectData(formData);
       }
     });
   };
-  postSelectForm = data => {
-    if (!data) return;
-    let { baseUrl, updateSelectedList, updateOptionalList } = this.props;
+  /**
+   * @description 处理时间段删除事件
+   * @param {*} date
+   * @param {*} time
+   * @returns
+   */
+  handleComfirm = (date, time) => {
+    if (!date || !time) return;
+    const current = this.state.data.filter(item => item.date === date && item.time === time)[0];
+    this.deleteSelectData(current.id);
+  };
+  /**
+   * @description 向服务器发送get请求，获取系统开放、关闭时间数据
+   */
+  getPreordainAt = () => {
+    const { baseUrl } = this.props;
     axios
-      .post(`${baseUrl}/swzx/`, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data
-      })
+      .get(`${baseUrl}/preordain/time`)
       .then(res => {
-        console.log(res);
-        // updateSelectedList();
-        // updateOptionalList();
+        if (res.status >= 200 && res.status <= 300) {
+          const data = res.data.data;
+          this.setState({ preordainAt: data });
+        }
       })
       .catch(err => {
-        console.log(err);
+        message.error(err.response.data.message);
       });
   };
-  updateSelectedList = data => {};
-  updateOptionalList = data => {};
+  /**
+   * @description 向服务器发送get请求，获取可以选择的列表，数据需要处理才能使用
+   */
+  getSelectedList = () => {
+    const { baseUrl } = this.props;
+    axios
+      .get(`${baseUrl}/preordain/list`)
+      .then(res => {
+        if (res.status >= 200 && res.status <= 300) {
+          const data = res.data.data;
+          const username = sessionStorage.getItem('username');
+          const selectedList = data.filter(item => item.college);
+          // FIXME: 最后的数据可能需要排序
+          const selectedOptions = data
+            .map(item => item.date)
+            .filter((ele, idx, arr) => arr.indexOf(ele) === idx)
+            .map(item => ({
+              value: item,
+              label: item,
+              children: data.filter(ele => ele.date === item).map(ele => ({
+                value: ele.time,
+                label: `${ele.time} ${ele.college ? ele.college : ''}`,
+                disabled: ele.college ? true : false
+              }))
+            }));
+          const defaultOption = data
+            .filter(ele => ele.college === username)
+            .sort((a, b) => b.id - a.id)
+            .map(i => [i.date, i.time])[0];
+          this.setState({
+            data,
+            selectedList,
+            selectedOptions,
+            defaultOption
+          });
+        }
+      })
+      .catch(err => {
+        message.error(err.response.data.message);
+      });
+  };
+  /**
+   * @description 向服务器发送post请求，学院选择时间段
+   * @param {*} data
+   * @returns
+   */
+  createSelectData = data => {
+    if (!data) return;
+    const { token } = sessionStorage;
+    const { baseUrl } = this.props;
+    const params = qs.stringify(data);
+    axios
+      .post(`${baseUrl}/preordain/select`, params, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        if (res.status >= 200 && res.status <= 300) {
+          message.success('添加成功');
+          this.getSelectedList();
+        }
+      })
+      .catch(err => {
+        message.error('添加失败');
+      });
+  };
+  /**
+   * @description 向服务器发送delete请求，删除学院已选择的时间段
+   * @param {*} id
+   * @returns
+   */
+  deleteSelectData = id => {
+    if (!id) return;
+    const { token } = sessionStorage;
+    const { baseUrl } = this.props;
+
+    axios
+      .delete(`${baseUrl}/preordain/select/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        // TODO: 存储数据并舒心请求
+        if (res.status >= 200 && res.status <= 300) {
+          message.success('删除成功');
+          this.getSelectedList();
+        }
+      })
+      .catch(err => {
+        message.error('删除失败');
+      });
+  };
   render() {
     return (
       <BasicLayout history={this.props.history}>
         <SelectForm
-          form={this.props.form}
-          options={this.state.options}
+          options={this.state.selectedOptions}
+          defaultValue={this.state.defaultOption}
           handleSubmit={this.handleSubmit}
         />
         <Divider />
         <SelectTimeline
+          preordainAt={this.state.preordainAt}
           selected={this.state.selectedList}
-          startAt={'2018-09-21 14:00'}
-          endAt={'2018-09-27 14:00'}
+          handleComfirm={this.handleComfirm}
         />
         <BackTop />
       </BasicLayout>
@@ -167,16 +198,7 @@ class Home extends Component {
 }
 
 const mapStateToProps = state => ({
-  baseUrl: state.baseUrl,
-  selected: state.selected
+  baseUrl: state.baseUrl
 });
 
-const mapDispatchToProps = dispatch => ({
-  updateSelectedList: bindActionCreators(updateSelectedList, dispatch),
-  updateOptionalList: bindActionCreators(updateOptionalList, dispatch)
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Form.create()(Home));
+export default connect(mapStateToProps)(Home);
