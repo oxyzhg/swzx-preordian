@@ -100,7 +100,7 @@ class NewOrdianForm extends Component {
     while (moment(today).isBefore(endValue)) {
       let sh = today.date() === startValue.date() ? today.hour() : 8;
       let eh = today.date() === endValue.date() ? endValue.hour() : 18;
-      let available = [8, 9, 10, 11, 14, 15, 16]; // 可接受预约时间段，17时例外
+      let available = [8, 9, 10, 11, 14, 15, 16, 17]; // 可接受预约时间段，17时例外
       let gap = today.day() === 5 ? 3 : 1; // 周五三连跳
       let children = [];
 
@@ -117,7 +117,7 @@ class NewOrdianForm extends Component {
               label: `${sh}:20-${sh}:40`
             },
             {
-              value: `${sh}:40-${sh}:00`,
+              value: `${sh}:40-${sh + 1}:00`,
               label: `${sh}:40-${sh + 1}:00`
             }
           ];
