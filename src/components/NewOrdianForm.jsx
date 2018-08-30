@@ -12,6 +12,7 @@ class NewOrdianForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      currentId: null,
       openUneditable: true,
       startUneditable: true,
       openValue: null,
@@ -78,6 +79,38 @@ class NewOrdianForm extends Component {
       openUneditable: false,
       submitType: 'upgrade'
     });
+  };
+
+  handleExport = () => {
+    const { currentId } = this.state;
+    const { token } = sessionStorage;
+    if (!currentId || !token) return;
+    const { baseUrl } = this.props;
+
+    axios
+      .get(`${baseUrl}/preordain/export/${this.state.currentId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          responseType: 'blob'
+        }
+      })
+      .then(res => {
+        if (res.status >= 200 && res.status <= 300) {
+          console.log(typeof res);
+
+          let url = window.URL.createObjectURL(new Blob([res.data]));
+          let link = document.createElement('a');
+          link.style.display = 'none';
+          link.href = url;
+          link.setAttribute('download', 'excel.xlsx');
+
+          document.body.appendChild(link);
+          link.click();
+        }
+      })
+      .catch(err => {
+        console.error(err);
+      });
   };
   handleNewPage = e => {
     this.setState({
@@ -179,6 +212,7 @@ class NewOrdianForm extends Component {
         if (res.status >= 200 && res.status <= 300) {
           const data = res.data.data;
           this.setState({
+            currentId: data.id,
             openValue: moment(data.open_at),
             closeValue: moment(data.close_at),
             startValue: moment(data.start_at),
@@ -308,6 +342,13 @@ class NewOrdianForm extends Component {
         <FormItem {...tailFormItemLayout}>
           {this.state.openUneditable ? (
             <Button.Group>
+              <Button
+                type="primary"
+                ghost
+                href={`${this.props.baseUrl}/preordain/export/${this.state.currentId}`}
+              >
+                导出
+              </Button>
               <Button type="primary" ghost onClick={this.handleEditable}>
                 修改
               </Button>
